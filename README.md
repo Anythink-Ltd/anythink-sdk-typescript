@@ -1,6 +1,6 @@
-# @anythink-cloud/sdk
+# Anythink TypeScript SDK
 
-React SDK for the Anythink platform
+The TypeScript SDK for [Anythink](https://anythink.cloud), published on npm as `@anythink-cloud/sdk`. It handles sign-in, sessions and authenticated requests for browser and React apps.
 
 ## Features
 
@@ -95,35 +95,30 @@ const handleLoginSubmit = async (values: {
 
 ## Development
 
+The project uses [bun](https://bun.sh).
+
 ```bash
-# Install dependencies
-yarn install
-
-# Build the package
-yarn build
-
-# Watch mode for development
-yarn dev
-
-# Type checking
-yarn typecheck
-
-# Linting
-yarn lint
-
-# Run tests
-yarn test
-
-# Run tests in watch mode
-yarn test:watch
-
-# Run tests with coverage
-yarn test:coverage
+bun install               # install dependencies
+bun run build             # build with tsup
+bun run dev               # watch mode
+bun run typecheck         # tsc --noEmit
+bun run lint              # eslint
+bun run test              # run the tests once
+bun run test:coverage     # tests with coverage thresholds
+bun run check:package     # publint and are-the-types-wrong
 ```
 
-## Testing
+See [TESTING.md](./TESTING.md) for what the tests cover and the coverage policy.
 
-The SDK uses [Vitest](https://vitest.dev/) for testing. Tests are being added bit by bit as this is built out.
+## Contributing and releases
+
+Releases are managed with [Changesets](https://github.com/changesets/changesets). If your pull request changes the published package, add a changeset:
+
+```bash
+bun run changeset
+```
+
+Commit the generated file in `.changeset/`. When it lands on `main`, CI opens a "Version packages" pull request; merging that publishes the release to npm with provenance and tags it `v<version>`. Releases are only ever published by CI from `main`.
 
 ## License
 

@@ -31,18 +31,34 @@ export interface AuthStoreOptions extends CookieStorageOptions {
   storageType?: "cookie" | "sessionStorage" | "localStorage";
 }
 
-const safeStorage = (type: "sessionStorage" | "localStorage") => ({
+const safeStorage = (
+  type: "sessionStorage" | "localStorage",
+  cookieStorageFallback?: ReturnType<typeof createCookieStorage>
+) => ({
   getItem: (name: string): string | null => {
     if (typeof window === "undefined") return null;
-    return window[type].getItem(name);
+    let value = window[type].getItem(name);
+    if (!value && cookieStorageFallback) {
+      value = cookieStorageFallback.getItem(name);
+      if (value) {
+        window[type].setItem(name, value);
+      }
+    }
+    return value;
   },
   setItem: (name: string, value: string): void => {
     if (typeof window === "undefined") return;
     window[type].setItem(name, value);
+    if (cookieStorageFallback) {
+      cookieStorageFallback.setItem(name, value);
+    }
   },
   removeItem: (name: string): void => {
     if (typeof window === "undefined") return;
     window[type].removeItem(name);
+    if (cookieStorageFallback) {
+      cookieStorageFallback.removeItem(name);
+    }
   },
 });
 
@@ -86,15 +102,7 @@ export const createAuthStore = (options?: AuthStoreOptions) => {
       {
         name: options?.name ?? "anythink_auth_session",
         storage: createJSONStorage(() => {
-          if (options?.storageType === "sessionStorage") {
-            return safeStorage("sessionStorage");
-          }
-          if (options?.storageType === "localStorage") {
-            return safeStorage("localStorage");
-          }
-
-          // Default fallback to cookie storage
-          return createCookieStorage({
+          const cookieStorage = createCookieStorage({
             name: options?.name ?? "anythink_auth_session",
             path: "/",
             secure:
@@ -103,6 +111,16 @@ export const createAuthStore = (options?: AuthStoreOptions) => {
             sameSite: "lax",
             ...options, // User-provided options override defaults
           });
+
+          if (options?.storageType === "sessionStorage") {
+            return safeStorage("sessionStorage", cookieStorage);
+          }
+          if (options?.storageType === "localStorage") {
+            return safeStorage("localStorage", cookieStorage);
+          }
+
+          // Default fallback to cookie storage
+          return cookieStorage;
         }),
         // Only persist the session and user, not loading/error states
         partialize: (state: AuthState) => ({

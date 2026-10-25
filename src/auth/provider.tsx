@@ -148,6 +148,7 @@ export function AuthProvider({
   // Check if authenticated (reactive to session changes)
   const isAuthenticated = useMemo(() => {
     if (!session) return false;
+    // eslint-disable-next-line react-hooks/purity -- expiry is compared with the current time on each session change
     if (session.expires_at && Date.now() >= session.expires_at * 1000) {
       return false;
     }

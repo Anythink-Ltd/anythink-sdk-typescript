@@ -1,17 +1,23 @@
 {
   "name": "@anythink-cloud/sdk",
-  "version": "0.4.3",
-  "description": "React SDK for the Anythink platform",
+  "version": "0.4.4",
+  "description": "Anythink TypeScript SDK: auth and sessions for browser and React apps",
+  "type": "commonjs",
   "homepage": "https://anythink.cloud",
-  "bugs": "https://github.com/Anythink-Ltd/anythink-sdk/issues",
+  "bugs": "https://github.com/Anythink-Ltd/anythink-sdk-typescript/issues",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
     }
   },
   "files": [
@@ -22,12 +28,14 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "lint": "eslint src --ext .ts,.tsx",
+    "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "test": "vitest",
+    "test": "vitest run",
     "test:watch": "vitest --watch",
-    "test:coverage": "vitest --coverage",
-    "prepublishOnly": "npm run build"
+    "test:coverage": "vitest run --coverage",
+    "check:package": "publint && attw --pack .",
+    "changeset": "changeset",
+    "release": "bun run build && changeset publish"
   },
   "keywords": [
     "anythink",
@@ -37,12 +45,15 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Anythink-Ltd/anythink-sdk.git"
+    "url": "git+https://github.com/Anythink-Ltd/anythink-sdk-typescript.git"
   },
   "publishConfig": {
     "access": "public"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@changesets/cli": "^3.0.3",
+    "@eslint/js": "^9.0.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.0.0",
     "@testing-library/react-hooks": "^8.0.1",
@@ -50,15 +61,17 @@
     "@types/node": "^20.0.0",
     "@types/react": "^18.0.0 || ^19.0.0",
     "@types/react-dom": "^18.0.0 || ^19.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
     "@vitejs/plugin-react": "^4.3.1",
+    "@vitest/coverage-v8": "^2",
     "eslint": "^9.0.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "jsdom": "^24.0.0",
+    "publint": "^0.3.25",
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
+    "typescript-eslint": "^8.71.0",
     "vitest": "^2.0.0"
   },
   "peerDependencies": {
@@ -67,5 +80,9 @@
   "dependencies": {
     "axios": "^1.13.2",
     "zustand": "^5.0.8"
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
   }
 }
