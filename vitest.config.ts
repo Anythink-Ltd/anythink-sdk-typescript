@@ -4,6 +4,7 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
+  css: { postcss: {} },
   test: {
     environment: "jsdom",
     globals: true,
