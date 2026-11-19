@@ -26,4 +26,6 @@ export type {
   SignInResponse,
   RefreshResponse,
   TokenPair,
+  RegisterOptions,
+  SignupContext,
 } from "@/types/auth";

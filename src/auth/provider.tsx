@@ -13,6 +13,7 @@ import type {
   SignInResponse,
   RefreshResponse,
   User,
+  RegisterOptions,
 } from "@/types/auth";
 
 /**
@@ -76,7 +77,8 @@ export interface AuthContextValue {
     firstName: string,
     lastName: string,
     email: string,
-    password: string
+    password: string,
+    options?: RegisterOptions
   ) => Promise<{ error: Error | null }>;
   /**
    * Change password
