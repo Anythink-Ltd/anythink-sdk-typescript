@@ -1,0 +1,83 @@
+name: Release on merge to main
+
+# Publishes each green commit on main to npm and mirrors it to anythink-cloud.
+# Add "[skip release]" to a commit message to skip a release.
+
+on:
+  workflow_run:
+    workflows: ["PR Checks"]
+    types: [completed]
+    branches: [main]
+
+# Serialize so two quick merges can't race on the next version.
+concurrency:
+  group: release-on-merge
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Tag, publish & mirror
+    runs-on: ubuntu-latest
+    environment: release
+    if: >
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      !contains(github.event.workflow_run.head_commit.message, '[skip release]')
+    permissions:
+      contents: write   # push the tag and create the GitHub release
+      id-token: write   # npm Trusted Publishing (OIDC)
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: actions/setup-node@v4
+        with:
+          # Node 24 ships npm >= 11.5.1, which OIDC trusted publishing needs.
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          cache: yarn
+
+      - name: Compute next patch version
+        id: ver
+        run: |
+          LATEST="$(git tag -l 'v*.*.*' --sort=-v:refname | head -n 1)"
+          # Before the first tag, continue from the last version published by hand.
+          [ -z "$LATEST" ] && LATEST="v$(npm view @anythink-cloud/sdk version)"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST#v}"
+          VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+          # A minor or major bump in package.json wins over the next patch.
+          PKG="$(node -p "require('./package.json').version")"
+          [ "$(printf '%s\n' "$PKG" "$VERSION" | sort -V | tail -n 1)" = "$PKG" ] && VERSION="$PKG"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Latest: ${LATEST} → next: v${VERSION}"
+
+      - run: yarn install --frozen-lockfile
+
+      - name: Publish to npm (Trusted Publishing / OIDC)
+        # No NPM_TOKEN: npm trusts this workflow, and provenance is attached.
+        run: |
+          npm version "${{ steps.ver.outputs.version }}" --no-git-tag-version --allow-same-version
+          npm publish --access public
+
+      - name: Tag the release
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.ver.outputs.tag }}" -m "Release ${{ steps.ver.outputs.tag }}"
+          git push origin "${{ steps.ver.outputs.tag }}"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ steps.ver.outputs.tag }}" --generate-notes --title "${{ steps.ver.outputs.tag }}"
+
+      - name: Mirror to anythink-cloud
+        env:
+          MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
+        run: |
+          git push "https://x-access-token:${MIRROR_TOKEN}@github.com/anythink-cloud/anythink-sdk-typescript.git" \
+            "${{ github.event.workflow_run.head_sha }}:refs/heads/main" "refs/tags/${{ steps.ver.outputs.tag }}"

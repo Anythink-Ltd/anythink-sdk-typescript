@@ -125,6 +125,10 @@ yarn test:coverage
 
 The SDK uses [Vitest](https://vitest.dev/) for testing. Tests are being added bit by bit as this is built out.
 
+## Releasing
+
+Every merge to `main` publishes the next patch version to npm once PR Checks pass, tags it, creates a GitHub release, and mirrors `main` and the tag to `anythink-cloud/anythink-sdk-typescript`. Bump the minor or major version in `package.json` in the PR to release more than a patch; add `[skip release]` to the merge commit message to skip one.
+
 ## License
 
 MIT
