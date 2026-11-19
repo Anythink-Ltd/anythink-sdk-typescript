@@ -71,6 +71,24 @@ export interface AuthConfig {
 }
 
 /**
+ * How a sign-up arrived, sent as `signup_context` (snake_case on the wire)
+ */
+export interface SignupContext {
+  client?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmTerm?: string;
+  utmContent?: string;
+  referrer?: string;
+}
+
+export interface RegisterOptions {
+  signupContext?: SignupContext;
+  turnstileToken?: string;
+}
+
+/**
  * Sign in response
  */
 export interface SignInResponse {

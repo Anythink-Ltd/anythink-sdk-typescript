@@ -340,6 +340,46 @@ describe("AuthClient", () => {
       expect(result.error).toBeNull();
     });
 
+    it("Register_WithSignupContextAndTurnstileToken_SendsThemSnakeCased", async () => {
+      mockAxiosInstance.post.mockResolvedValueOnce({ data: {} });
+
+      await authClient.register("John", "Doe", "john@example.com", "pass", {
+        signupContext: {
+          client: "web /signup",
+          utmSource: "google",
+          utmMedium: "cpc",
+          utmCampaign: "spring",
+          utmTerm: "plan",
+          utmContent: "a",
+          referrer: "https://example.com",
+        },
+        turnstileToken: "tok",
+      });
+
+      const body = mockAxiosInstance.post.mock.calls[0][1];
+      expect(body.signup_context).toEqual({
+        client: "web /signup",
+        utm_source: "google",
+        utm_medium: "cpc",
+        utm_campaign: "spring",
+        utm_term: "plan",
+        utm_content: "a",
+        referrer: "https://example.com",
+      });
+      expect(body.turnstile_token).toBe("tok");
+    });
+
+    it("Register_WithoutOptions_SendsNoSignupContextOrToken", async () => {
+      mockAxiosInstance.post.mockResolvedValueOnce({ data: {} });
+
+      await authClient.register("John", "Doe", "john@example.com", "pass", {});
+
+      const body = mockAxiosInstance.post.mock.calls[0][1];
+      expect(Object.keys(body).sort()).toEqual(
+        ["email", "first_name", "last_name", "org_id", "password"].sort()
+      );
+    });
+
     it("should use custom register endpoint if provided", async () => {
       const customConfig: AuthConfig = {
         ...mockConfig,

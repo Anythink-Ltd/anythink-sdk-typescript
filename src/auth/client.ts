@@ -6,6 +6,7 @@ import type {
   RefreshResponse,
   TokenPair,
   User,
+  RegisterOptions,
 } from "@/types/auth";
 import { createAuthStore } from "@/auth/store";
 
@@ -110,13 +111,15 @@ export class AuthClient {
    * @param lastName User's last name
    * @param email User's email
    * @param password User's password
+   * @param options Optional sign-up context and bot-check token
    * @returns Error object or null if successful
    */
   async register(
     firstName: string,
     lastName: string,
     email: string,
-    password: string
+    password: string,
+    options?: RegisterOptions
   ): Promise<{ error: Error | null }> {
     try {
       await this.axiosClient.post(
@@ -128,6 +131,20 @@ export class AuthClient {
           email,
           password,
           org_id: this.config.orgId,
+          ...(options?.signupContext && {
+            signup_context: {
+              client: options.signupContext.client,
+              utm_source: options.signupContext.utmSource,
+              utm_medium: options.signupContext.utmMedium,
+              utm_campaign: options.signupContext.utmCampaign,
+              utm_term: options.signupContext.utmTerm,
+              utm_content: options.signupContext.utmContent,
+              referrer: options.signupContext.referrer,
+            },
+          }),
+          ...(options?.turnstileToken && {
+            turnstile_token: options.turnstileToken,
+          }),
         }
       );
       return { error: null };
